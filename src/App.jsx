@@ -791,9 +791,11 @@ export default function App() {
   const [keyError, setKeyError] = useState(null);
   const tryUnlock = useCallback((key) => {
     setKeyError(null);
+    console.log("[tryUnlock] key:", key);
     fetchScenes(key)
-      .then(() => { setTKey(key); setShowKeyPrompt(false); })
+      .then((list) => { console.log("[tryUnlock] success, scenes:", list.length); setTKey(key); setShowKeyPrompt(false); })
       .catch(err => {
+        console.error("[tryUnlock] error:", err.message);
         const code = Number(err.message);
         if (code === 401 || code === 403) setKeyError("Invalid key");
         else setKeyError("Connection error");
