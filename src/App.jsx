@@ -29,7 +29,7 @@ function getCharacter(characters, id) {
 // ── Styles ─────────────────────────────────────────────────────
 const S = {
   // Root
-  root: { minHeight: "100vh", background: "#08080f", color: "#e8e6e3", fontFamily: "'Noto Sans JP', 'Hiragino Kaku Gothic Pro', sans-serif", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column" },
+  root: { height: "100vh", background: "#08080f", color: "#e8e6e3", fontFamily: "'Noto Sans JP', 'Hiragino Kaku Gothic Pro', sans-serif", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column" },
 
   // Title screen
   title: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2rem", textAlign: "center", background: "radial-gradient(ellipse at 50% 30%, #12122a 0%, #08080f 70%)" },
