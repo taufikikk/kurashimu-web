@@ -791,11 +791,9 @@ export default function App() {
   const [keyError, setKeyError] = useState(null);
   const tryUnlock = useCallback((key) => {
     setKeyError(null);
-    console.log("[tryUnlock] key:", key);
     fetchScenes(key)
-      .then((list) => { console.log("[tryUnlock] success, scenes:", list.length); setTKey(key); setShowKeyPrompt(false); })
+      .then(() => { setTKey(key); setShowKeyPrompt(false); })
       .catch(err => {
-        console.error("[tryUnlock] error:", err.message);
         const code = Number(err.message);
         if (code === 401 || code === 403) setKeyError("Invalid key");
         else setKeyError("Connection error");
@@ -869,18 +867,37 @@ export default function App() {
     });
   }, [handleSceneUpload]);
 
-  // Start game with selected scene
+  // Start game with selected scene (fetch full data if needed)
   const startGame = (sceneId) => {
     const s = scenes[sceneId];
     if (!s) return;
-    setSelectedSceneId(sceneId);
-    setPlayerName(nameInput.trim() || "Andi");
-    setCurrentNodeId(s.nodes[0].id);
-    setHistory([]);
-    setScore(0);
-    setMaxScore(0);
-    setFlags({});
-    setPhase("playing");
+    if (s.nodes && s.nodes.length > 0) {
+      setSelectedSceneId(sceneId);
+      setPlayerName(nameInput.trim() || "Andi");
+      setCurrentNodeId(s.nodes[0].id);
+      setHistory([]);
+      setScore(0);
+      setMaxScore(0);
+      setFlags({});
+      setPhase("playing");
+    } else {
+      const headers = tKey ? { "X-Access-Key": tKey } : {};
+      fetch(`${API_BASE}/api/scenes/${sceneId}`, { headers })
+        .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(full => {
+          if (!full.nodes || full.nodes.length === 0) return;
+          setScenes(prev => ({ ...prev, [sceneId]: full }));
+          setSelectedSceneId(sceneId);
+          setPlayerName(nameInput.trim() || "Andi");
+          setCurrentNodeId(full.nodes[0].id);
+          setHistory([]);
+          setScore(0);
+          setMaxScore(0);
+          setFlags({});
+          setPhase("playing");
+        })
+        .catch(() => {});
+    }
   };
 
   // Advance dialog — tap while typing = skip, tap when done = next node
