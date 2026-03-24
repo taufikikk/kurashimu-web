@@ -1008,7 +1008,7 @@ export default function App() {
     const sceneList = visibleScenes.sort((a, b) => (a.phase || 0) - (b.phase || 0) || (a.scene_id || "").localeCompare(b.scene_id || ""));
     return (
       <div style={S.root}>
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", background: "radial-gradient(ellipse at 50% 10%, #12122a 0%, #08080f 70%)" }}>
+        <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", background: "radial-gradient(ellipse at 50% 10%, #12122a 0%, #08080f 70%)" }}>
           {/* Header */}
           <div style={{ textAlign: "center", padding: "1.5rem 1rem 0.5rem" }}>
             <div style={S.titleMain} onClick={handleLogoTap}>暮らシム</div>
