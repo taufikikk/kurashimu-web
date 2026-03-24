@@ -11,10 +11,8 @@ const KONBINI_01 = {"_flags_documentation":{"flags_set_in_scene":["life_declined
 const getNode = (nodes, id) => nodes.find(n => n.id === id);
 const replName = (t, name) => t ? t.replace(/\{player_name\}/g, name).replace(/\{player_name_katakana\}/g, name) : t;
 
-// Access config — change this value to set your key
-// Generate: open console, run: btoa("yourpassword")
-const T2_HASH = "dDJhY2Nlc3M="; // <-- replace with btoa("yourpassword")
-const verifyKey = (input) => { try { return btoa(input) === T2_HASH; } catch { return false; } };
+// Backend API
+const API_BASE = "https://web-production-8fbf6.up.railway.app";
 
 function determineEnding(nodes, score) {
   const endings = nodes.filter(n => n.type === "ending").sort((a, b) => (b.total_score_min || 0) - (a.total_score_min || 0));
@@ -766,6 +764,42 @@ export default function App() {
     return Object.values(scenes).filter(s => (s.tier || 1) <= maxTier);
   }, [scenes, tKey]);
 
+  // Fetch scenes from API
+  const fetchScenes = useCallback((accessKey) => {
+    const headers = accessKey ? { "X-Access-Key": accessKey } : {};
+    return fetch(`${API_BASE}/api/scenes`, { headers })
+      .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(data => {
+        const list = Array.isArray(data) ? data : data.scenes || [];
+        if (list.length > 0) {
+          setScenes(prev => {
+            const updated = { ...prev };
+            for (const s of list) if (s.scene_id) updated[s.scene_id] = s;
+            return updated;
+          });
+        }
+        return list;
+      });
+  }, []);
+
+  // Fetch on mount (no key)
+  useEffect(() => {
+    fetchScenes(null).catch(() => { /* keep bundled KONBINI_01 as fallback */ });
+  }, [fetchScenes]);
+
+  // Try unlock: validate key against backend via status code
+  const [keyError, setKeyError] = useState(null);
+  const tryUnlock = useCallback((key) => {
+    setKeyError(null);
+    fetchScenes(key)
+      .then(() => { setTKey(key); setShowKeyPrompt(false); })
+      .catch(err => {
+        const code = Number(err.message);
+        if (code === 401 || code === 403) setKeyError("Invalid key");
+        else setKeyError("Connection error");
+      });
+  }, [fetchScenes]);
+
   const dialogRef = useRef(null);
 
   const currentNode = useMemo(() => currentNodeId && scene ? getNode(scene.nodes, currentNodeId) : null, [scene, currentNodeId]);
@@ -1090,22 +1124,21 @@ export default function App() {
                 onKeyDown={e => {
                   if (e.key === "Enter") {
                     const v = e.target.value.trim();
-                    if (verifyKey(v)) { setTKey(v); setShowKeyPrompt(false); }
-                    else { e.target.value = ""; e.target.placeholder = "Invalid key"; }
+                    if (v) tryUnlock(v);
                   } else if (e.key === "Escape") {
                     setShowKeyPrompt(false);
                   }
                 }}
               />
+              {keyError && <div style={{ fontSize: "0.75rem", color: "#f87171", marginBottom: "0.5rem" }}>{keyError}</div>}
               <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center" }}>
                 <button style={S.topBtn} onClick={() => {
                   const el = document.getElementById("tk-input");
                   const v = el?.value?.trim();
-                  if (v && verifyKey(v)) { setTKey(v); setShowKeyPrompt(false); }
-                  else if (el) { el.value = ""; el.placeholder = "Invalid key"; }
+                  if (v) tryUnlock(v);
                 }}>OK</button>
                 <button style={S.topBtn} onClick={() => setShowKeyPrompt(false)}>Cancel</button>
-                {tKey && <button style={{ ...S.topBtn, color: "#f87171" }} onClick={() => { setTKey(null); setShowKeyPrompt(false); }}>Lock</button>}
+                {tKey && <button style={{ ...S.topBtn, color: "#f87171" }} onClick={() => { setTKey(null); setShowKeyPrompt(false); fetchScenes(null).catch(() => {}); }}>Lock</button>}
               </div>
             </div>
           </div>
