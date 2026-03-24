@@ -802,7 +802,7 @@ export default function App() {
 
   const dialogRef = useRef(null);
 
-  const currentNode = useMemo(() => currentNodeId && scene ? getNode(scene.nodes, currentNodeId) : null, [scene, currentNodeId]);
+  const currentNode = useMemo(() => currentNodeId && scene?.nodes ? getNode(scene.nodes, currentNodeId) : null, [scene, currentNodeId]);
 
   // Typewriter speed based on settings + node pacing
   const typeSpeed = useMemo(() => {
